@@ -1,5 +1,5 @@
 # task2_valued_no_suggestions.py
-
+import os
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count
 
@@ -45,7 +45,23 @@ def identify_valued_no_suggestions(df):
     # 3. Calculate the number and proportion of these employees.
     # 4. Return the results.
 
-    pass  # Remove this line after implementing the function
+    #pass  # Remove this line after implementing the function
+    # **Filter employees with SatisfactionRating >= 4**
+    valued_employees_df = df.filter(col("SatisfactionRating") >= 4)
+
+    # **Filter those who have NOT provided suggestions (ProvidedSuggestions == False)**
+    valued_no_suggestions_df = valued_employees_df.filter(col("ProvidedSuggestions") == False)
+
+    # **Count the total number of employees**
+    total_employees = df.count()
+
+    #  **Count employees meeting criteria**
+    num_valued_no_suggestions = valued_no_suggestions_df.count()
+
+    # **Calculate the proportion (handling divide-by-zero)**
+    proportion = (num_valued_no_suggestions / total_employees * 100) if total_employees > 0 else 0
+
+    return num_valued_no_suggestions, round(proportion, 2)
 
 def write_output(number, proportion, output_path):
     """
@@ -59,6 +75,7 @@ def write_output(number, proportion, output_path):
     Returns:
         None
     """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, 'w') as f:
         f.write(f"Number of Employees Feeling Valued without Suggestions: {number}\n")
         f.write(f"Proportion: {proportion}%\n")
@@ -71,8 +88,8 @@ def main():
     spark = initialize_spark()
     
     # Define file paths
-    input_file = "/workspaces/Employee_Engagement_Analysis_Spark/input/employee_data.csv"
-    output_file = "/workspaces/Employee_Engagement_Analysis_Spark/outputs/task2/valued_no_suggestions.txt"
+    input_file = "/workspaces/spark-structured-api-employee-engagement-analysis-maroofansari2310/input/employee_data.csv"
+    output_file = "/workspaces/spark-structured-api-employee-engagement-analysis-maroofansari2310/outputs/task2/valued_no_suggestions.txt"
     
     # Load data
     df = load_data(spark, input_file)
